@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="https://icon-icons.com/icon/balloon-chat-conversation-speak-word/113413" type="image/x-icon">
+    <title>Chat App</title>
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js" defer></script>
+    <script defer>
+    document.addEventListener('DOMContentLoaded', () => {
+        try {
+            const socket = io()
+
+            socket.on('connect', () => {
+                displayMessage(`You've connected with an id of ${socket.id}`)
+            })
+
+            socket.on('message', text => {
+                console.log(text)
+            })
+
+            const roomBtn = document.getElementById('room-button')
+            const messageInput = document.getElementById('message-input')
+            const roomInput = document.getElementById('room-input')
+            const form = document.querySelector('form')
+            const leaveBtn = document.getElementById('leave-button')
+            const nameBtn = document.getElementById('name-button')
+            const nameInput = document.getElementById('name')
+            let room, inRoom = false, senderName = 'user'
+
+            form.addEventListener('submit', e => {
+                e.preventDefault()
+                let message = messageInput.value,
+                    room = roomInput.value
+
+                if (message && inRoom) {
+                    displayMessage(`You: ${message}`)
+                    socket.emit('room-message', message, room)
+                } else if (message) {
+                    displayMessage(`You: ${message}`)
+                    socket.emit('message', message)
+                }
+                messageInput.value = ''
+            })
+
+            socket.on('serverMessage', message => {
+                displayMessage(`${senderName}: ${message}`)
+            })
+            socket.on('server-room-message', message => {
+                displayMessage(message)
+            })
+
+            socket.on('name-update', (names, socketID) => {
+                findName(names, socketID)
+            })
+
+            const displayMessage = (message) => {
+                const div = document.createElement('div')
+                div.textContent = message
+                document.getElementById('message-container').append(div)
+            }
+
+            roomBtn.addEventListener('click', () => {
+                room = roomInput.value
+                if (room) {
+                    displayMessage(`You've joined room '${room}'`)
+                    socket.join(room)
+                    inRoom = true
+                    room = ''
+                } else {
+                    return
+                }
+            })
+
+            leaveBtn.addEventListener('click', () => {
+                displayMessage(`Left room '${room}'`)
+                socket.leave(room)
+                inRoom = false
+            })
+
+            nameBtn.addEventListener('click', () => {
+                let name = nameInput.value
+                if (name) {
+                socket.emit('name-change', [socket.id, name])
+                nameInput.value = ''
+                displayMessage(`You've changed your name to ${name}`)
+                }
+            })
+
+            const findName = (nameArray, socketID) => {
+                nameArray.forEach((list) => {
+                    if (list[0] === socketID) {
+                        senderName = list[1]                  
+                    }
+                })
+            }
+        } catch (err) {
+            alert(err)
+        }
+    })
+    </script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #36393f; 
+            color: #ffffff; 
+        }
+
+        .title {
+            text-align: center;
+            color: #7289da; 
+            margin-top: 20px;
+        }
+
+        .form {
+            max-width: 300px; 
+            margin: 20px auto;
+            background-color: #2f3136; 
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .label {
+            display: block;
+            margin-bottom: 8px;
+            color: #ffffff; 
+        }
+
+        .input {
+            width: calc(100% - 16px);
+            padding: 8px;
+            margin-bottom: 16px;
+            border: 1px solid #36393f; 
+            border-radius: 4px;
+            box-sizing: border-box;
+            color: #ffffff; 
+            background-color: #40444b; 
+        }
+
+        .button {
+            width: 100%;
+            padding: 10px;
+            background-color: #7289da; 
+            color: #ffffff; 
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .button:hover {
+            background-color: #677bc4; 
+        }
+
+        #message-container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 10px;
+            background-color: #2f3136; 
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow-y: auto;
+            max-height: 400px;
+        }
+
+        .message {
+            margin-bottom: 10px;
+            padding: 8px;
+            border: 1px solid #36393f;
+            border-radius: 4px;
+            background-color: #40444b; 
+        }
+
+        #room-input {
+            margin-bottom: 16px;
+        }
+
+        .leave-button{
+            margin:16px;
+        }
+    </style>
+</head>
+<body>
+    <h1 class="title">Chat App</h1>
+    <div id="message-container"></div>
+    <form class='form'>
+        <label class='label' for="message-input">Message</label>
+        <input type="text" id='message-input' name="message" class='input'>
+        <button type="submit" id='send-button' class='button'>Send!</button>
+        <br>
+        <label class='label' for="room-input">Room</label>
+        <input type="text" id="room-input" name='room' class='input'>
+        <button type="button" id='room-button' class='button'>Join!</button>
+        <label class='label' for="name">Name</label>
+        <input type="text" name="name" id="name" class='input'>
+        <button id="name-button" class='button'>Change!</button>
+        <br>
+        <button id='leave-button' class='button'>Leave</button>
+    </form>
+</body>
+</html>

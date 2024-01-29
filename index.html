@@ -50,8 +50,8 @@
                 displayMessage(message)
             })
 
-            socket.on('name-update', (names, socketID) => {
-                findName(names, socketID)
+            socket.on('name-update', name => {
+                senderName = name
             })
 
             const displayMessage = (message) => {
@@ -87,13 +87,6 @@
                 }
             })
 
-            const findName = (nameArray, socketID) => {
-                nameArray.forEach((list) => {
-                    if (list[0] === socketID) {
-                        senderName = list[1]                  
-                    }
-                })
-            }
         } catch (err) {
             alert(err)
         }

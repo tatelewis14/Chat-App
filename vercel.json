@@ -1,0 +1,9 @@
+{
+    "functions": {
+      "api/server.js": {
+        "runtime": "nodejs14.x",
+        "maxDuration": 30
+      }
+    }
+  }
+  
